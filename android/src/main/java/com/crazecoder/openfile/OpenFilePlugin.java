@@ -108,7 +108,8 @@ public class OpenFilePlugin implements MethodCallHandler
                 }
                 if (hasPermission(Manifest.permission.READ_EXTERNAL_STORAGE)) {
                     if (TYPE_STRING_APK.equals(typeString)) {
-                        openApkFile();
+                        result(-1, "Permission denied: Do not accept open apk file");
+//                       openApkFile();
                         return;
                     }
                     startActivity();
@@ -185,12 +186,17 @@ public class OpenFilePlugin implements MethodCallHandler
     }
 
     private void startActivity() {
+        int type = 0;
+        String message = "done";
         if(!isFileAvailable()){
             return;
         }
         Intent intent = new Intent(Intent.ACTION_VIEW);
-        if (TYPE_STRING_APK.equals(typeString))
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (TYPE_STRING_APK.equals(typeString)){
+            type =-1;
+            message = "Permission denied: Do not accept open apk file";
+//            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        }
         else
             intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         intent.addCategory(Intent.CATEGORY_DEFAULT);
@@ -202,8 +208,6 @@ public class OpenFilePlugin implements MethodCallHandler
         } else {
             intent.setDataAndType(Uri.fromFile(new File(filePath)), typeString);
         }
-        int type = 0;
-        String message = "done";
         try {
             activity.startActivity(intent);
         } catch (ActivityNotFoundException e) {
@@ -360,47 +364,47 @@ public class OpenFilePlugin implements MethodCallHandler
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    private void openApkFile() {
-        if (!canInstallApk()) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startInstallPermissionSettingActivity();
-            } else {
-                ActivityCompat.requestPermissions(activity,
-                        new String[]{Manifest.permission.REQUEST_INSTALL_PACKAGES}, REQUEST_CODE);
-            }
-        } else {
-            startActivity();
-        }
-    }
+//    @RequiresApi(api = Build.VERSION_CODES.M)
+//    private void openApkFile() {
+//        if (!canInstallApk()) {
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//                startInstallPermissionSettingActivity();
+//            } else {
+//                ActivityCompat.requestPermissions(activity,
+//                        new String[]{Manifest.permission.REQUEST_INSTALL_PACKAGES}, REQUEST_CODE);
+//            }
+//        } else {
+//            startActivity();
+//        }
+//    }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    private boolean canInstallApk() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            return activity.getPackageManager().canRequestPackageInstalls();
-        }
-        return hasPermission(Manifest.permission.REQUEST_INSTALL_PACKAGES);
-    }
+//    @RequiresApi(api = Build.VERSION_CODES.M)
+//    private boolean canInstallApk() {
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//            return activity.getPackageManager().canRequestPackageInstalls();
+//        }
+//        return hasPermission(Manifest.permission.REQUEST_INSTALL_PACKAGES);
+//    }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private void startInstallPermissionSettingActivity() {
-        if (activity == null) {
-            return;
-        }
-        Uri packageURI = Uri.parse("package:" + activity.getPackageName());
-        Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, packageURI);
-        activity.startActivityForResult(intent, RESULT_CODE);
-    }
+//    @RequiresApi(api = Build.VERSION_CODES.O)
+//    private void startInstallPermissionSettingActivity() {
+//        if (activity == null) {
+//            return;
+//        }
+//        Uri packageURI = Uri.parse("package:" + activity.getPackageName());
+//        Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, packageURI);
+//        activity.startActivityForResult(intent, RESULT_CODE);
+//    }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public boolean onRequestPermissionsResult(int requestCode, String[] strings, int[] grantResults) {
         if (requestCode != REQUEST_CODE) return false;
-        if (hasPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
-                && TYPE_STRING_APK.equals(typeString)) {
-            openApkFile();
-            return false;
-        }
+//        if (hasPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+//                && TYPE_STRING_APK.equals(typeString)) {
+//            openApkFile();
+//            return false;
+//        }
         for (String string : strings) {
             if (!hasPermission(string)) {
                 result(-3, "Permission denied: " + string);
@@ -415,11 +419,7 @@ public class OpenFilePlugin implements MethodCallHandler
     @Override
     public boolean onActivityResult(int requestCode, int resultCode, Intent intent) {
         if (requestCode == RESULT_CODE) {
-            if (canInstallApk()) {
-                startActivity();
-            } else {
-                result(-3, "Permission denied: " + Manifest.permission.REQUEST_INSTALL_PACKAGES);
-            }
+            result(-1, "Permission denied: android.permission.REQUEST_INSTALL_PACKAGES");
         }
         return false;
     }
